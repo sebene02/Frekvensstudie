@@ -16,6 +16,7 @@
       --danger: #b91c1c;
       --dangerText: #ffffff;
       --success: #16a34a;
+      --info: #0f766e;
     }
 
     * { box-sizing: border-box; }
@@ -28,7 +29,7 @@
     }
 
     .wrap {
-      max-width: 980px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 12px;
     }
@@ -46,6 +47,11 @@
       font-size: 1.6rem;
     }
 
+    h2 {
+      margin: 0 0 10px 0;
+      font-size: 1.1rem;
+    }
+
     .muted {
       color: var(--muted);
       font-size: 0.92rem;
@@ -59,11 +65,13 @@
     .stats { grid-template-columns: repeat(2, 1fr); }
     .form-grid { grid-template-columns: 1fr; }
     .btn-grid { grid-template-columns: 1fr; }
+    .mini-grid { grid-template-columns: 1fr; }
 
     @media (min-width: 700px) {
       .stats { grid-template-columns: repeat(4, 1fr); }
       .form-grid { grid-template-columns: repeat(4, 1fr); }
       .btn-grid { grid-template-columns: repeat(2, 1fr); }
+      .mini-grid { grid-template-columns: repeat(3, 1fr); }
     }
 
     .stat-number {
@@ -130,8 +138,13 @@
       color: var(--dangerText);
     }
 
+    .btn-info {
+      background: var(--info);
+      color: white;
+    }
+
     .bigbtn {
-      min-height: 82px;
+      min-height: 100px;
       text-align: center;
       display: flex;
       flex-direction: column;
@@ -146,9 +159,9 @@
     }
 
     .btn-count {
-      font-size: 0.9rem;
+      font-size: 0.86rem;
       font-weight: 600;
-      opacity: 0.9;
+      opacity: 0.95;
       background: rgba(255,255,255,0.14);
       padding: 4px 10px;
       border-radius: 999px;
@@ -215,6 +228,24 @@
       background: white;
     }
 
+    .summary-chip {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: #f8fafc;
+    }
+
+    .summary-chip-title {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .summary-chip-number {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -226,10 +257,20 @@
       padding: 10px 8px;
       text-align: left;
       vertical-align: top;
+      white-space: nowrap;
+    }
+
+    th:first-child, td:first-child {
+      white-space: normal;
     }
 
     .small {
       font-size: 0.9rem;
+    }
+
+    .success-text {
+      color: var(--success);
+      font-weight: 700;
     }
   </style>
 </head>
@@ -249,7 +290,7 @@
 
     <div class="tabbar card">
       <button class="tab active" data-tab="insamling">Insamling</button>
-      <button class="tab" data-tab="jamforelse">Jämförelse1</button>
+      <button class="tab" data-tab="jamforelse">Jämförelse</button>
       <button class="tab" data-tab="logg">Logg</button>
       <button class="tab" data-tab="installningar">Inställningar</button>
     </div>
@@ -280,6 +321,11 @@
       </div>
 
       <div class="card">
+        <h2>Stationssummering</h2>
+        <div class="grid mini-grid" id="stationTotals"></div>
+      </div>
+
+      <div class="card">
         <label for="commentInput">Kommentar</label>
         <textarea id="commentInput" placeholder="Ex. material saknas eller ruta räddas manuellt"></textarea>
         <div class="row" style="margin-top:10px;">
@@ -291,13 +337,22 @@
       </div>
 
       <div class="card">
+        <h2>Felorsaker / kategorier</h2>
         <div class="grid btn-grid" id="categoryButtons"></div>
       </div>
     </section>
 
     <section id="jamforelse" class="tabsection hidden">
       <div class="card">
-        <div class="small muted" style="margin-bottom:10px;">Jämförelse mellan stationer</div>
+        <div class="row" style="margin-bottom:10px;">
+          <button class="btn-info" id="copySummaryBtn">Kopiera resultat till Excel</button>
+          <button class="btn-outline" id="exportSummaryBtnTop">Exportera sammanställning (CSV)</button>
+        </div>
+        <div id="copyStatus" class="small muted">Kopiera tabellen direkt och klistra in i Excel.</div>
+      </div>
+
+      <div class="card">
+        <div class="small muted" style="margin-bottom:10px;">Jämförelse mellan stationer och felorsaker</div>
         <div style="overflow:auto;">
           <table id="summaryTable"></table>
         </div>
@@ -365,6 +420,18 @@
     return new Date().toLocaleString("sv-SE");
   }
 
+  function stationCount(station) {
+    return state.records.filter(r => r.station === station).length;
+  }
+
+  function categoryCount(station, category) {
+    return state.records.filter(r => r.station === station && r.category === category).length;
+  }
+
+  function totalCategoryCount(category) {
+    return state.records.filter(r => r.category === category).length;
+  }
+
   function refreshStationSelect() {
     const sel = $("stationSelect");
     sel.innerHTML = "";
@@ -382,18 +449,25 @@
     $("categoryPills").innerHTML = state.categories.map(c => `<span class="pill">${c}</span>`).join("");
   }
 
+  function renderStationTotals() {
+    const wrap = $("stationTotals");
+    wrap.innerHTML = "";
+    state.stations.forEach(station => {
+      const div = document.createElement("div");
+      div.className = "summary-chip";
+      div.innerHTML = `
+        <div class="summary-chip-title">${station}</div>
+        <div class="summary-chip-number">${stationCount(station)}</div>
+      `;
+      wrap.appendChild(div);
+    });
+  }
+
   function playButtonFeedback(btn) {
     btn.classList.remove("feedback");
     void btn.offsetWidth;
     btn.classList.add("feedback");
-
-    setTimeout(() => {
-      btn.classList.remove("feedback");
-    }, 300);
-  }
-
-  function getCategoryCountForActiveStation(category) {
-    return state.records.filter(r => r.station === state.activeStation && r.category === category).length;
+    setTimeout(() => btn.classList.remove("feedback"), 300);
   }
 
   function renderCategoryButtons() {
@@ -401,19 +475,16 @@
     wrap.innerHTML = "";
 
     state.categories.forEach(cat => {
+      const activeCount = categoryCount(state.activeStation, cat);
+      const totalCount = totalCategoryCount(cat);
+
       const btn = document.createElement("button");
       btn.className = "btn bigbtn";
-
-      const label = document.createElement("div");
-      label.className = "btn-label";
-      label.textContent = cat;
-
-      const count = document.createElement("div");
-      count.className = "btn-count";
-      count.textContent = `Antal: ${getCategoryCountForActiveStation(cat)}`;
-
-      btn.appendChild(label);
-      btn.appendChild(count);
+      btn.innerHTML = `
+        <div class="btn-label">${cat}</div>
+        <div class="btn-count">I ${state.activeStation}: ${activeCount}</div>
+        <div class="btn-count">Totalt: ${totalCount}</div>
+      `;
 
       btn.onclick = () => {
         addRecord(cat);
@@ -422,14 +493,6 @@
 
       wrap.appendChild(btn);
     });
-  }
-
-  function stationCount(station) {
-    return state.records.filter(r => r.station === station).length;
-  }
-
-  function categoryCount(station, category) {
-    return state.records.filter(r => r.station === station && r.category === category).length;
   }
 
   function updateStats() {
@@ -457,22 +520,77 @@
   }
 
   function renderSummaryTable() {
-    let html = "<thead><tr><th>Kategori</th>";
-    state.stations.forEach(s => html += `<th>${s}</th>`);
+    let html = "<thead><tr><th>Felorsak / kategori</th><th>Totalt</th>";
+    state.stations.forEach(s => {
+      html += `<th>${s}</th><th>${s} %</th>`;
+    });
     html += "</tr></thead><tbody>";
 
     state.categories.forEach(cat => {
-      html += `<tr><td>${cat}</td>`;
+      html += `<tr>`;
+      html += `<td>${cat}</td>`;
+      html += `<td>${totalCategoryCount(cat)}</td>`;
+
       state.stations.forEach(st => {
         const count = categoryCount(st, cat);
         const total = stationCount(st);
-        html += `<td>${count} st (${pct(count, total)} %)</td>`;
+        html += `<td>${count}</td><td>${pct(count, total)} %</td>`;
       });
-      html += "</tr>";
+
+      html += `</tr>`;
     });
+
+    html += `<tr style="font-weight:700;">`;
+    html += `<td>Totalt per station</td>`;
+    html += `<td>${state.records.length}</td>`;
+    state.stations.forEach(st => {
+      html += `<td>${stationCount(st)}</td><td>100,0 %</td>`;
+    });
+    html += `</tr>`;
 
     html += "</tbody>";
     $("summaryTable").innerHTML = html;
+  }
+
+  function buildSummaryRowsForExcel() {
+    const rows = [];
+    const header = ["Felorsak / kategori", "Totalt"];
+    state.stations.forEach(st => {
+      header.push(`${st} antal`);
+      header.push(`${st} %`);
+    });
+    rows.push(header);
+
+    state.categories.forEach(cat => {
+      const row = [cat, totalCategoryCount(cat)];
+      state.stations.forEach(st => {
+        const count = categoryCount(st, cat);
+        row.push(count);
+        row.push(pct(count, stationCount(st)));
+      });
+      rows.push(row);
+    });
+
+    const totalRow = ["Totalt per station", state.records.length];
+    state.stations.forEach(st => {
+      totalRow.push(stationCount(st));
+      totalRow.push("100,0");
+    });
+    rows.push(totalRow);
+
+    return rows;
+  }
+
+  async function copySummaryToClipboard() {
+    const rows = buildSummaryRowsForExcel();
+    const text = rows.map(row => row.join("\t")).join("\n");
+
+    try {
+      await navigator.clipboard.writeText(text);
+      $("copyStatus").innerHTML = `<span class="success-text">Klart:</span> resultaten är kopierade. Klistra in direkt i Excel.`;
+    } catch (error) {
+      $("copyStatus").textContent = "Kunde inte kopiera automatiskt i den här webbläsaren.";
+    }
   }
 
   function addRecord(category) {
@@ -507,6 +625,7 @@
   function updateAll() {
     refreshStationSelect();
     renderPills();
+    renderStationTotals();
     renderCategoryButtons();
     updateStats();
     renderLog();
@@ -569,6 +688,11 @@
     URL.revokeObjectURL(url);
   }
 
+  function exportSummaryCSV() {
+    const rows = buildSummaryRowsForExcel();
+    exportCSV("frekvensstudie_sammanstallning.csv", rows);
+  }
+
   function bindEvents() {
     document.querySelectorAll(".tab").forEach(btn => {
       btn.onclick = () => {
@@ -599,6 +723,7 @@
     $("clearBtn").onclick = () => {
       state.records = [];
       updateAll();
+      $("copyStatus").textContent = "Kopiera tabellen direkt och klistra in i Excel.";
     };
 
     $("addStationBtn").onclick = () => {
@@ -635,17 +760,9 @@
       exportCSV("frekvensstudie_observationer.csv", rows);
     };
 
-    $("exportSummaryBtn").onclick = () => {
-      const rows = [["Station", "Kategori", "Antal", "Andel %"]];
-      state.stations.forEach(st => {
-        state.categories.forEach(cat => {
-          const count = categoryCount(st, cat);
-          const total = stationCount(st);
-          rows.push([st, cat, count, pct(count, total)]);
-        });
-      });
-      exportCSV("frekvensstudie_sammanstallning.csv", rows);
-    };
+    $("exportSummaryBtn").onclick = exportSummaryCSV;
+    $("exportSummaryBtnTop").onclick = exportSummaryCSV;
+    $("copySummaryBtn").onclick = copySummaryToClipboard;
   }
 
   refreshStationSelect();
