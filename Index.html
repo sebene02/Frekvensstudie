@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frekvensstudie Dometic</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #111827;
+      --primaryText: #ffffff;
+      --danger: #b91c1c;
+      --dangerText: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 12px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    h1 { margin: 0 0 6px 0; font-size: 1.6rem; }
+    .muted { color: var(--muted); font-size: 0.92rem; }
+    .grid {
+      display: grid;
+      gap: 10px;
+    }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .btn-grid { grid-template-columns: 1fr; }
+    @media (min-width: 700px) {
+      .stats { grid-template-columns: repeat(4, 1fr); }
+      .form-grid { grid-template-columns: repeat(4, 1fr); }
+      .btn-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .stat-number { font-size: 1.8rem; font-weight: 700; }
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 1rem;
+      background: white;
+    }
+    textarea { min-height: 70px; resize: vertical; }
+    button {
+      border: none;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn { background: var(--primary); color: var(--primaryText); }
+    .btn-outline {
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-danger {
+      background: var(--danger);
+      color: var(--dangerText);
+    }
+    .bigbtn {
+      min-height: 82px;
+      text-align: center;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tabbar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .tab {
+      padding: 12px 8px;
+      border-radius: 14px;
+      background: white;
+      border: 1px solid var(--border);
+      font-weight: 700;
+    }
+    .tab.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .hidden { display: none; }
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--border);
+      background: #f1f5f9;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      margin: 4px 6px 0 0;
+    }
+    .record {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      margin-top: 10px;
+      background: white;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.94rem;
+    }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .small { font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Frekvensstudie Dometic</h1>
+      <div class="muted">Mobilvänlig app för observationer i formning, limning och fräsning.</div>
+    </div>
+
+    <div class="grid stats">
+      <div class="card"><div class="muted">Totalt</div><div class="stat-number" id="totalObs">0</div></div>
+      <div class="card"><div class="muted">Aktiv station</div><div class="stat-number" id="activeStationStat" style="font-size:1.2rem;">Formning</div></div>
+      <div class="card"><div class="muted">I station</div><div class="stat-number" id="stationObs">0</div></div>
+      <div class="card"><div class="muted">Timer</div><div class="stat-number" id="timerStat">30s</div></div>
+    </div>
+
+    <div class="tabbar card">
+      <button class="tab active" data-tab="insamling">Insamling</button>
+      <button class="tab" data-tab="jamforelse">Jämförelse1</button>
+      <button class="tab" data-tab="logg">Logg</button>
+      <button class="tab" data-tab="installningar">Inställningar</button>
+    </div>
+
+    <section id="insamling" class="tabsection">
+      <div class="card">
+        <div class="grid form-grid">
+          <div>
+            <label for="stationSelect">Station</label>
+            <select id="stationSelect"></select>
+          </div>
+          <div>
+            <label for="observerInput">Observatör</label>
+            <input id="observerInput" placeholder="Ditt namn" />
+          </div>
+          <div>
+            <label for="methodSelect">Metod</label>
+            <select id="methodSelect">
+              <option>Fast intervall</option>
+              <option>Slumpmässig observation</option>
+            </select>
+          </div>
+          <div>
+            <label for="intervalInput">Intervall (sek)</label>
+            <input id="intervalInput" type="number" min="1" value="30" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label for="commentInput">Kommentar</label>
+        <textarea id="commentInput" placeholder="Ex. material saknas eller ruta räddas manuellt"></textarea>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn-outline" id="startTimerBtn">Starta timer</button>
+          <button class="btn-outline" id="resetTimerBtn">Återställ</button>
+          <button class="btn-outline" id="undoBtn">Ångra senaste</button>
+          <button class="btn-danger" id="clearBtn">Rensa all data</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="grid btn-grid" id="categoryButtons"></div>
+      </div>
+    </section>
+
+    <section id="jamforelse" class="tabsection hidden">
+      <div class="card">
+        <div class="small muted" style="margin-bottom:10px;">Jämförelse mellan stationer</div>
+        <div style="overflow:auto;">
+          <table id="summaryTable"></table>
+        </div>
+      </div>
+    </section>
+
+    <section id="logg" class="tabsection hidden">
+      <div class="card">
+        <div class="row">
+          <button class="btn" id="exportObsBtn">Exportera observationer (CSV)</button>
+          <button class="btn-outline" id="exportSummaryBtn">Exportera sammanställning (CSV)</button>
+        </div>
+      </div>
+      <div id="logList"></div>
+    </section>
+
+    <section id="installningar" class="tabsection hidden">
+      <div class="card">
+        <label for="newStationInput">Lägg till station</label>
+        <div class="row">
+          <input id="newStationInput" placeholder="Ny station" />
+          <button class="btn" id="addStationBtn">Lägg till</button>
+        </div>
+        <div id="stationPills" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card">
+        <label for="newCategoryInput">Lägg till kategori</label>
+        <div class="row">
+          <input id="newCategoryInput" placeholder="Ny kategori" />
+          <button class="btn" id="addCategoryBtn">Lägg till</button>
+        </div>
+        <div id="categoryPills" style="margin-top:10px;"></div>
+      </div>
+    </section>
+  </div>
+
+<script>
+  const state = {
+    stations: ["Formning", "Limning", "Fräsning"],
+    categories: [
+      "Värdeskapande arbete",
+      "Väntan",
+      "Materialhantering",
+      "Omarbete / räddning",
+      "Kontroll / inspektion",
+      "Övrigt"
+    ],
+    activeStation: "Formning",
+    records: [],
+    timerRunning: false,
+    secondsLeft: 30,
+    timerId: null
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  function pct(part, total) {
+    if (!total) return "0,0";
+    return ((part / total) * 100).toFixed(1).replace(".", ",");
+  }
+
+  function nowLocal() {
+    return new Date().toLocaleString("sv-SE");
+  }
+
+  function refreshStationSelect() {
+    const sel = $("stationSelect");
+    sel.innerHTML = "";
+    state.stations.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = s;
+      sel.appendChild(opt);
+    });
+    sel.value = state.activeStation;
+  }
+
+  function renderPills() {
+    $("stationPills").innerHTML = state.stations.map(s => `<span class="pill">${s}</span>`).join("");
+    $("categoryPills").innerHTML = state.categories.map(c => `<span class="pill">${c}</span>`).join("");
+  }
+
+  function renderCategoryButtons() {
+    const wrap = $("categoryButtons");
+    wrap.innerHTML = "";
+    state.categories.forEach(cat => {
+      const btn = document.createElement("button");
+      btn.className = "btn bigbtn";
+      btn.textContent = cat;
+      btn.onclick = () => addRecord(cat);
+      wrap.appendChild(btn);
+    });
+  }
+
+  function stationCount(station) {
+    return state.records.filter(r => r.station === station).length;
+  }
+
+  function categoryCount(station, category) {
+    return state.records.filter(r => r.station === station && r.category === category).length;
+  }
+
+  function updateStats() {
+    $("totalObs").textContent = state.records.length;
+    $("activeStationStat").textContent = state.activeStation;
+    $("stationObs").textContent = stationCount(state.activeStation);
+    $("timerStat").textContent = `${state.secondsLeft}s`;
+  }
+
+  function renderLog() {
+    const list = $("logList");
+    if (state.records.length === 0) {
+      list.innerHTML = `<div class="card"><div class="muted">Inga observationer ännu.</div></div>`;
+      return;
+    }
+    list.innerHTML = state.records.map(r => `
+      <div class="record">
+        <div><strong>${r.station}</strong> · ${r.category}</div>
+        <div class="muted">${r.localTime}</div>
+        <div class="small">Observatör: ${r.observer || "Ej angiven"} · Metod: ${r.method} · Intervall: ${r.intervalSeconds} sek</div>
+        ${r.comment ? `<div class="small" style="margin-top:6px;">Kommentar: ${r.comment}</div>` : ""}
+      </div>
+    `).join("");
+  }
+
+  function renderSummaryTable() {
+    let html = "<thead><tr><th>Kategori</th>";
+    state.stations.forEach(s => html += `<th>${s}</th>`);
+    html += "</tr></thead><tbody>";
+    state.categories.forEach(cat => {
+      html += `<tr><td>${cat}</td>`;
+      state.stations.forEach(st => {
+        const count = categoryCount(st, cat);
+        const total = stationCount(st);
+        html += `<td>${count} st (${pct(count, total)} %)</td>`;
+      });
+      html += "</tr>";
+    });
+    html += "</tbody>";
+    $("summaryTable").innerHTML = html;
+  }
+
+  function addRecord(category) {
+    const intervalVal = Math.max(1, Number($("intervalInput").value) || 30);
+    const rec = {
+      station: state.activeStation,
+      category,
+      comment: $("commentInput").value.trim(),
+      observer: $("observerInput").value.trim(),
+      method: $("methodSelect").value,
+      intervalSeconds: intervalVal,
+      localTime: nowLocal()
+    };
+    state.records.unshift(rec);
+    $("commentInput").value = "";
+    updateAll();
+    if (state.timerRunning) state.secondsLeft = intervalVal;
+    updateStats();
+    if (navigator.vibrate) navigator.vibrate(50);
+  }
+
+  function updateAll() {
+    refreshStationSelect();
+    renderPills();
+    renderCategoryButtons();
+    updateStats();
+    renderLog();
+    renderSummaryTable();
+  }
+
+  function startTimer() {
+    const intervalVal = Math.max(1, Number($("intervalInput").value) || 30);
+    if (state.timerRunning) {
+      state.timerRunning = false;
+      clearInterval(state.timerId);
+      state.timerId = null;
+      $("startTimerBtn").textContent = "Starta timer";
+      return;
+    }
+    state.timerRunning = true;
+    if (!state.secondsLeft || state.secondsLeft < 1) state.secondsLeft = intervalVal;
+    $("startTimerBtn").textContent = "Pausa timer";
+    state.timerId = setInterval(() => {
+      state.secondsLeft -= 1;
+      if (state.secondsLeft <= 0) {
+        state.secondsLeft = intervalVal;
+        if (navigator.vibrate) navigator.vibrate([120, 80, 120]);
+      }
+      updateStats();
+    }, 1000);
+  }
+
+  function resetTimer() {
+    state.secondsLeft = Math.max(1, Number($("intervalInput").value) || 30);
+    updateStats();
+  }
+
+  function exportCSV(filename, rows) {
+    const csv = rows.map(row => row.map(value => {
+      const str = String(value ?? "");
+      if (str.includes(",") || str.includes("\n") || str.includes('"')) {
+        return '"' + str.replaceAll('"', '""') + '"';
+      }
+      return str;
+    }).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function bindEvents() {
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".tabsection").forEach(s => s.classList.add("hidden"));
+        $(btn.dataset.tab).classList.remove("hidden");
+      };
+    });
+
+    $("stationSelect").onchange = (e) => {
+      state.activeStation = e.target.value;
+      updateStats();
+    };
+
+    $("intervalInput").onchange = () => {
+      resetTimer();
+    };
+
+    $("startTimerBtn").onclick = startTimer;
+    $("resetTimerBtn").onclick = resetTimer;
+
+    $("undoBtn").onclick = () => {
+      state.records.shift();
+      updateAll();
+    };
+
+    $("clearBtn").onclick = () => {
+      state.records = [];
+      updateAll();
+    };
+
+    $("addStationBtn").onclick = () => {
+      const v = $("newStationInput").value.trim();
+      if (v && !state.stations.includes(v)) {
+        state.stations.push(v);
+        $("newStationInput").value = "";
+        updateAll();
+      }
+    };
+
+    $("addCategoryBtn").onclick = () => {
+      const v = $("newCategoryInput").value.trim();
+      if (v && !state.categories.includes(v)) {
+        state.categories.push(v);
+        $("newCategoryInput").value = "";
+        updateAll();
+      }
+    };
+
+    $("exportObsBtn").onclick = () => {
+      const rows = [
+        ["Tidpunkt", "Station", "Kategori", "Kommentar", "Observatör", "Metod", "Intervall (sek)"],
+        ...state.records.slice().reverse().map(r => [r.localTime, r.station, r.category, r.comment, r.observer, r.method, r.intervalSeconds])
+      ];
+      exportCSV("frekvensstudie_observationer.csv", rows);
+    };
+
+    $("exportSummaryBtn").onclick = () => {
+      const rows = [["Station", "Kategori", "Antal", "Andel %"]];
+      state.stations.forEach(st => {
+        state.categories.forEach(cat => {
+          const count = categoryCount(st, cat);
+          const total = stationCount(st);
+          rows.push([st, cat, count, pct(count, total)]);
+        });
+      });
+      exportCSV("frekvensstudie_sammanstallning.csv", rows);
+    };
+  }
+
+  refreshStationSelect();
+  bindEvents();
+  updateAll();
+</script>
+</body>
+</html>
