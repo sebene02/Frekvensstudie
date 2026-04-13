@@ -68,8 +68,8 @@
     .mini-grid { grid-template-columns: 1fr; }
 
     @media (min-width: 700px) {
-      .stats { grid-template-columns: repeat(4, 1fr); }
-      .form-grid { grid-template-columns: repeat(4, 1fr); }
+      .stats { grid-template-columns: repeat(3, 1fr); }
+      .form-grid { grid-template-columns: repeat(2, 1fr); }
       .btn-grid { grid-template-columns: repeat(2, 1fr); }
       .mini-grid { grid-template-columns: repeat(3, 1fr); }
     }
@@ -278,14 +278,13 @@
   <div class="wrap">
     <div class="card">
       <h1>Frekvensstudie Dometic</h1>
-      <div class="muted">Mobilvänlig app för observationer i formning, limning och fräsning.</div>
+      <div class="muted">Mobilvänlig app för frekvensmätning i formning, limning och fräsning.</div>
     </div>
 
     <div class="grid stats">
       <div class="card"><div class="muted">Totalt</div><div class="stat-number" id="totalObs">0</div></div>
       <div class="card"><div class="muted">Aktiv station</div><div class="stat-number" id="activeStationStat" style="font-size:1.2rem;">Formning</div></div>
       <div class="card"><div class="muted">I station</div><div class="stat-number" id="stationObs">0</div></div>
-      <div class="card"><div class="muted">Timer</div><div class="stat-number" id="timerStat">30s</div></div>
     </div>
 
     <div class="tabbar card">
@@ -306,17 +305,6 @@
             <label for="observerInput">Observatör</label>
             <input id="observerInput" placeholder="Ditt namn" />
           </div>
-          <div>
-            <label for="methodSelect">Metod</label>
-            <select id="methodSelect">
-              <option>Fast intervall</option>
-              <option>Slumpmässig observation</option>
-            </select>
-          </div>
-          <div>
-            <label for="intervalInput">Intervall (sek)</label>
-            <input id="intervalInput" type="number" min="1" value="30" />
-          </div>
         </div>
       </div>
 
@@ -329,8 +317,6 @@
         <label for="commentInput">Kommentar</label>
         <textarea id="commentInput" placeholder="Ex. material saknas eller ruta räddas manuellt"></textarea>
         <div class="row" style="margin-top:10px;">
-          <button class="btn-outline" id="startTimerBtn">Starta timer</button>
-          <button class="btn-outline" id="resetTimerBtn">Återställ</button>
           <button class="btn-outline" id="undoBtn">Ångra senaste</button>
           <button class="btn-danger" id="clearBtn">Rensa all data</button>
         </div>
@@ -400,10 +386,7 @@
       "Limkant osymetrisk"
     ],
     activeStation: "Formning",
-    records: [],
-    timerRunning: false,
-    secondsLeft: 30,
-    timerId: null
+    records: []
   };
 
   const $ = (id) => document.getElementById(id);
@@ -496,7 +479,6 @@
     $("totalObs").textContent = state.records.length;
     $("activeStationStat").textContent = state.activeStation;
     $("stationObs").textContent = stationCount(state.activeStation);
-    $("timerStat").textContent = `${state.secondsLeft}s`;
   }
 
   function renderLog() {
@@ -510,7 +492,7 @@
       <div class="record">
         <div><strong>${r.station}</strong> · ${r.category}</div>
         <div class="muted">${r.localTime}</div>
-        <div class="small">Observatör: ${r.observer || "Ej angiven"} · Metod: ${r.method} · Intervall: ${r.intervalSeconds} sek</div>
+        <div class="small">Observatör: ${r.observer || "Ej angiven"}</div>
         ${r.comment ? `<div class="small" style="margin-top:6px;">Kommentar: ${r.comment}</div>` : ""}
       </div>
     `).join("");
@@ -591,15 +573,11 @@
   }
 
   function addRecord(category) {
-    const intervalVal = Math.max(1, Number($("intervalInput").value) || 30);
-
     const rec = {
       station: state.activeStation,
       category,
       comment: $("commentInput").value.trim(),
       observer: $("observerInput").value.trim(),
-      method: $("methodSelect").value,
-      intervalSeconds: intervalVal,
       localTime: nowLocal()
     };
 
@@ -607,12 +585,6 @@
     $("commentInput").value = "";
 
     updateAll();
-
-    if (state.timerRunning) {
-      state.secondsLeft = intervalVal;
-    }
-
-    updateStats();
 
     if (navigator.vibrate) {
       navigator.vibrate(50);
@@ -627,44 +599,6 @@
     updateStats();
     renderLog();
     renderSummaryTable();
-  }
-
-  function startTimer() {
-    const intervalVal = Math.max(1, Number($("intervalInput").value) || 30);
-
-    if (state.timerRunning) {
-      state.timerRunning = false;
-      clearInterval(state.timerId);
-      state.timerId = null;
-      $("startTimerBtn").textContent = "Starta timer";
-      return;
-    }
-
-    state.timerRunning = true;
-
-    if (!state.secondsLeft || state.secondsLeft < 1) {
-      state.secondsLeft = intervalVal;
-    }
-
-    $("startTimerBtn").textContent = "Pausa timer";
-
-    state.timerId = setInterval(() => {
-      state.secondsLeft -= 1;
-
-      if (state.secondsLeft <= 0) {
-        state.secondsLeft = intervalVal;
-        if (navigator.vibrate) {
-          navigator.vibrate([120, 80, 120]);
-        }
-      }
-
-      updateStats();
-    }, 1000);
-  }
-
-  function resetTimer() {
-    state.secondsLeft = Math.max(1, Number($("intervalInput").value) || 30);
-    updateStats();
   }
 
   function exportCSV(filename, rows) {
@@ -705,13 +639,6 @@
       updateAll();
     };
 
-    $("intervalInput").onchange = () => {
-      resetTimer();
-    };
-
-    $("startTimerBtn").onclick = startTimer;
-    $("resetTimerBtn").onclick = resetTimer;
-
     $("undoBtn").onclick = () => {
       state.records.shift();
       updateAll();
@@ -743,15 +670,13 @@
 
     $("exportObsBtn").onclick = () => {
       const rows = [
-        ["Tidpunkt", "Station", "Kategori", "Kommentar", "Observatör", "Metod", "Intervall (sek)"],
+        ["Tidpunkt", "Station", "Kategori", "Kommentar", "Observatör"],
         ...state.records.slice().reverse().map(r => [
           r.localTime,
           r.station,
           r.category,
           r.comment,
-          r.observer,
-          r.method,
-          r.intervalSeconds
+          r.observer
         ])
       ];
       exportCSV("frekvensstudie_observationer.csv", rows);
