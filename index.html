@@ -15,19 +15,24 @@
       --primaryText: #ffffff;
       --danger: #b91c1c;
       --dangerText: #ffffff;
+      --success: #16a34a;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
       background: var(--bg);
       color: var(--text);
     }
+
     .wrap {
       max-width: 980px;
       margin: 0 auto;
       padding: 12px;
     }
+
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -35,27 +40,44 @@
       padding: 14px;
       margin-bottom: 12px;
     }
-    h1 { margin: 0 0 6px 0; font-size: 1.6rem; }
-    .muted { color: var(--muted); font-size: 0.92rem; }
+
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 1.6rem;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
     .grid {
       display: grid;
       gap: 10px;
     }
+
     .stats { grid-template-columns: repeat(2, 1fr); }
     .form-grid { grid-template-columns: 1fr; }
     .btn-grid { grid-template-columns: 1fr; }
+
     @media (min-width: 700px) {
       .stats { grid-template-columns: repeat(4, 1fr); }
       .form-grid { grid-template-columns: repeat(4, 1fr); }
       .btn-grid { grid-template-columns: repeat(2, 1fr); }
     }
-    .stat-number { font-size: 1.8rem; font-weight: 700; }
+
+    .stat-number {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
     label {
       display: block;
       font-size: 0.9rem;
       margin-bottom: 6px;
       font-weight: 600;
     }
+
     input, select, textarea {
       width: 100%;
       border: 1px solid var(--border);
@@ -64,7 +86,12 @@
       font-size: 1rem;
       background: white;
     }
-    textarea { min-height: 70px; resize: vertical; }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
     button {
       border: none;
       border-radius: 16px;
@@ -72,31 +99,88 @@
       font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.08s ease, background-color 0.2s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
     }
-    .btn { background: var(--primary); color: var(--primaryText); }
+
+    button:active {
+      transform: scale(0.96);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      opacity: 0.9;
+    }
+
+    button:focus-visible {
+      outline: 3px solid #94a3b8;
+      outline-offset: 2px;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: var(--primaryText);
+    }
+
     .btn-outline {
       background: white;
       color: var(--text);
       border: 1px solid var(--border);
     }
+
     .btn-danger {
       background: var(--danger);
       color: var(--dangerText);
     }
+
     .bigbtn {
       min-height: 82px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
+
+    .btn-label {
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .btn-count {
+      font-size: 0.9rem;
+      font-weight: 600;
+      opacity: 0.9;
+      background: rgba(255,255,255,0.14);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .feedback {
+      animation: flashGreen 0.3s ease;
+    }
+
+    @keyframes flashGreen {
+      0% {
+        background-color: var(--success);
+        transform: scale(1.05);
+      }
+      100% {
+        background-color: var(--primary);
+        transform: scale(1);
+      }
+    }
+
     .row {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
     }
+
     .tabbar {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
     }
+
     .tab {
       padding: 12px 8px;
       border-radius: 14px;
@@ -104,12 +188,15 @@
       border: 1px solid var(--border);
       font-weight: 700;
     }
+
     .tab.active {
       background: var(--primary);
       color: white;
       border-color: var(--primary);
     }
+
     .hidden { display: none; }
+
     .pill {
       display: inline-block;
       border: 1px solid var(--border);
@@ -119,6 +206,7 @@
       font-size: 0.9rem;
       margin: 4px 6px 0 0;
     }
+
     .record {
       border: 1px solid var(--border);
       border-radius: 16px;
@@ -126,18 +214,23 @@
       margin-top: 10px;
       background: white;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.94rem;
     }
+
     th, td {
       border-bottom: 1px solid var(--border);
       padding: 10px 8px;
       text-align: left;
       vertical-align: top;
     }
-    .small { font-size: 0.9rem; }
+
+    .small {
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -289,14 +382,44 @@
     $("categoryPills").innerHTML = state.categories.map(c => `<span class="pill">${c}</span>`).join("");
   }
 
+  function playButtonFeedback(btn) {
+    btn.classList.remove("feedback");
+    void btn.offsetWidth;
+    btn.classList.add("feedback");
+
+    setTimeout(() => {
+      btn.classList.remove("feedback");
+    }, 300);
+  }
+
+  function getCategoryCountForActiveStation(category) {
+    return state.records.filter(r => r.station === state.activeStation && r.category === category).length;
+  }
+
   function renderCategoryButtons() {
     const wrap = $("categoryButtons");
     wrap.innerHTML = "";
+
     state.categories.forEach(cat => {
       const btn = document.createElement("button");
       btn.className = "btn bigbtn";
-      btn.textContent = cat;
-      btn.onclick = () => addRecord(cat);
+
+      const label = document.createElement("div");
+      label.className = "btn-label";
+      label.textContent = cat;
+
+      const count = document.createElement("div");
+      count.className = "btn-count";
+      count.textContent = `Antal: ${getCategoryCountForActiveStation(cat)}`;
+
+      btn.appendChild(label);
+      btn.appendChild(count);
+
+      btn.onclick = () => {
+        addRecord(cat);
+        playButtonFeedback(btn);
+      };
+
       wrap.appendChild(btn);
     });
   }
@@ -322,6 +445,7 @@
       list.innerHTML = `<div class="card"><div class="muted">Inga observationer ännu.</div></div>`;
       return;
     }
+
     list.innerHTML = state.records.map(r => `
       <div class="record">
         <div><strong>${r.station}</strong> · ${r.category}</div>
@@ -336,6 +460,7 @@
     let html = "<thead><tr><th>Kategori</th>";
     state.stations.forEach(s => html += `<th>${s}</th>`);
     html += "</tr></thead><tbody>";
+
     state.categories.forEach(cat => {
       html += `<tr><td>${cat}</td>`;
       state.stations.forEach(st => {
@@ -345,12 +470,14 @@
       });
       html += "</tr>";
     });
+
     html += "</tbody>";
     $("summaryTable").innerHTML = html;
   }
 
   function addRecord(category) {
     const intervalVal = Math.max(1, Number($("intervalInput").value) || 30);
+
     const rec = {
       station: state.activeStation,
       category,
@@ -360,12 +487,21 @@
       intervalSeconds: intervalVal,
       localTime: nowLocal()
     };
+
     state.records.unshift(rec);
     $("commentInput").value = "";
+
     updateAll();
-    if (state.timerRunning) state.secondsLeft = intervalVal;
+
+    if (state.timerRunning) {
+      state.secondsLeft = intervalVal;
+    }
+
     updateStats();
-    if (navigator.vibrate) navigator.vibrate(50);
+
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
   }
 
   function updateAll() {
@@ -379,6 +515,7 @@
 
   function startTimer() {
     const intervalVal = Math.max(1, Number($("intervalInput").value) || 30);
+
     if (state.timerRunning) {
       state.timerRunning = false;
       clearInterval(state.timerId);
@@ -386,15 +523,25 @@
       $("startTimerBtn").textContent = "Starta timer";
       return;
     }
+
     state.timerRunning = true;
-    if (!state.secondsLeft || state.secondsLeft < 1) state.secondsLeft = intervalVal;
+
+    if (!state.secondsLeft || state.secondsLeft < 1) {
+      state.secondsLeft = intervalVal;
+    }
+
     $("startTimerBtn").textContent = "Pausa timer";
+
     state.timerId = setInterval(() => {
       state.secondsLeft -= 1;
+
       if (state.secondsLeft <= 0) {
         state.secondsLeft = intervalVal;
-        if (navigator.vibrate) navigator.vibrate([120, 80, 120]);
+        if (navigator.vibrate) {
+          navigator.vibrate([120, 80, 120]);
+        }
       }
+
       updateStats();
     }, 1000);
   }
@@ -412,7 +559,8 @@
       }
       return str;
     }).join(",")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -433,7 +581,7 @@
 
     $("stationSelect").onchange = (e) => {
       state.activeStation = e.target.value;
-      updateStats();
+      updateAll();
     };
 
     $("intervalInput").onchange = () => {
@@ -474,7 +622,15 @@
     $("exportObsBtn").onclick = () => {
       const rows = [
         ["Tidpunkt", "Station", "Kategori", "Kommentar", "Observatör", "Metod", "Intervall (sek)"],
-        ...state.records.slice().reverse().map(r => [r.localTime, r.station, r.category, r.comment, r.observer, r.method, r.intervalSeconds])
+        ...state.records.slice().reverse().map(r => [
+          r.localTime,
+          r.station,
+          r.category,
+          r.comment,
+          r.observer,
+          r.method,
+          r.intervalSeconds
+        ])
       ];
       exportCSV("frekvensstudie_observationer.csv", rows);
     };
